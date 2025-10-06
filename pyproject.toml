@@ -1,0 +1,7 @@
+[project]
+name = "rl"
+version = "0.1.0"
+description = "reinforcement learning testbed"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = ["numpy>=2.3.3"]
