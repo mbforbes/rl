@@ -13,7 +13,7 @@ env = gym.make("CartPoleCustom-v0", render_mode="human", threshold_degrees=90)
 # env = gym.make("MountainCar-v0", render_mode="human")
 clock = pygame.time.Clock()
 
-n_episodes = 5
+n_episodes = 20
 best_reward = 0
 seed = None
 for episode in range(n_episodes):
@@ -25,14 +25,10 @@ for episode in range(n_episodes):
     total_reward: float = 0.0
 
     while not episode_over:
-        env.render()
-
-        # code.interact(local=dict(globals(), **locals()))
-
         # Choose an action: 0 = push cart left, 1 = push cart right
         # action = (
         #     env.action_space.sample()
-        # )  # Random action for now - real agents will be smarter!
+        # )
 
         action = 0
         keys = pygame.key.get_pressed()
@@ -51,7 +47,7 @@ for episode in range(n_episodes):
         episode_over = terminated or truncated
 
         # TODO: better to limit in the simulation itself?
-        clock.tick(60)
+        # clock.tick(20)
 
     best_reward = max(best_reward, total_reward)
     print(f"Episode finished! Total reward: {total_reward}")
