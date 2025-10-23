@@ -202,7 +202,7 @@ def multiple_agents() -> None:
         print(f"Reward for {agent}: {total_reward}")
         if hasattr(agent, "best_action"):
             # if callable(getattr(agent, "best_action", None)):
-            print(f"- {agent}'s best action estimate:", agent.best_action())
+            print(f"- {agent}'s best action estimate:", agent.best_action())  # type: ignore
     print()
     print("References:")
     print("True best action:", np.argmax(ARMS))
