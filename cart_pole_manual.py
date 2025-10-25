@@ -5,15 +5,11 @@ import pygame
 
 import cart_pole_env_custom  # really bad, but this has the side effect of registering it!
 
-# TODO: fork env to add my own and
-#  - pass custom limits
-#  - render boundaries
-#  - render score
 env = gym.make("CartPoleCustom-v0", render_mode="human", threshold_degrees=90)
 # env = gym.make("MountainCar-v0", render_mode="human")
 clock = pygame.time.Clock()
 
-n_episodes = 20
+n_episodes = 15
 best_reward = 0
 seed = None
 for episode in range(n_episodes):
