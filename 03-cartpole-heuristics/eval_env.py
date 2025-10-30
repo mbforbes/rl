@@ -4,7 +4,6 @@ import gymnasium as gym
 from gymnasium import spaces
 from gymnasium.envs.classic_control import CartPoleEnv
 
-# from gymnasium.error import DependencyNotInstalled
 import numpy as np
 import pygame
 from pygame import gfxdraw
@@ -15,7 +14,7 @@ class CartPoleEnvCustom(CartPoleEnv):
         self,
         sutton_barto_reward: bool = False,
         render_mode: str | None = None,
-        threshold_degrees: int = 12,
+        threshold_degrees: int = 90,
     ):
         """
         Custom cart pole env that's more fun.
@@ -212,7 +211,7 @@ class CartPoleEnvCustom(CartPoleEnv):
 
 gym.register(
     "CartPoleCustom-v0",
-    "cart_pole_env_custom:CartPoleEnvCustom",
-    max_episode_steps=1000,
-    reward_threshold=1000.0,
+    "eval_env:CartPoleEnvCustom",
+    max_episode_steps=5000,
+    reward_threshold=5000.0,
 )
