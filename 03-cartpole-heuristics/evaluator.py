@@ -38,7 +38,7 @@ class CartPoleEvaluator:
     def num_parameters(self) -> int:
         return params()
 
-    def evaluate(self, n_episodes: int = 1):
+    def evaluate(self, n_episodes: int = 10):
         n_parameters = self.num_parameters()
         print(f"agent parameters: {n_parameters}")
         rewards: list[float] = []

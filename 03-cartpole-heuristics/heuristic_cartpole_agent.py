@@ -110,7 +110,7 @@ def policy_predictive_deadband(state: np.ndarray) -> int:
         # intuition of riding a bicycle, in that if you want to turn left, you have to
         # turn right first, which swings the bicycle to the left, and then you lean left
         # to make the turn.
-        choice = 0 if cart_position > 0 else 1  # use cart position
+        choice = 1 if cart_position > 0 else 0  # use cart position
         # print(
         #     f"in deadband, cart position {cart_position} so returning {'left' if choice == 0 else 'right'}"
         # )
@@ -127,7 +127,8 @@ def params_predictive_deadband() -> int:
 
 
 def policy_predictive_deadband_demo(state: np.ndarray) -> int:
-    """simplified code to demonstrate 2-param solution"""
+    """simplified code to demonstrate 2-param solution.
+    (actions: 0 = left, 1 = right)"""
     VELOCITY_WEIGHT = 0.1
     DEADBAND = 0.01
 
@@ -135,6 +136,6 @@ def policy_predictive_deadband_demo(state: np.ndarray) -> int:
     effective_angle = pole_angle + VELOCITY_WEIGHT * pole_ang_v
 
     if abs(effective_angle) < DEADBAND:
-        return 1 if cart_p > 0 else 0
+        return 1 if cart_p > 0 else 0  # steer reverse!
 
     return 0 if effective_angle < 0 else 1
