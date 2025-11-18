@@ -98,11 +98,13 @@ next things to explore:
 """
 
 import code
+from functools import cache
 from typing import Callable, Any
 
 import numpy as np
 
 from tictactoe import TicTacToe, TicTacToeOptions, check_board
+from util import render_heatmap
 
 
 State = bytes
@@ -186,6 +188,7 @@ def p_groundtruth(s_prime: State, r: Reward, s: State, a: Action) -> Probability
     return 1.0 / len(s_primes)
 
 
+@cache
 def v(
     s: State,
     pi: Callable[[Action, State], Probability],
@@ -232,10 +235,32 @@ def main() -> None:
         reward_draw=0.0,
         opponent="random",
     )
+    gamma = 0.9
     env = TicTacToe(opts)
     board, _info = env.reset()
     env.render()
     while True:
+        # print current value
+        s = serialize(board)
+        value = v(s, pi_random, p_groundtruth, gamma, v)
+        print("Board's current value", value)
+        print("Next values:", value)
+
+        # approximate the action-value function by considering taking each action and
+        # computing the value for the resulting state.
+        # NOTE: This is wrong, because we (player 1) then get to move twice in a row!
+        # because the value function assumes we get to go next.
+        vs = np.full((3, 3), np.nan)
+        available_actions = possible_actions(s)
+        print(f"{len(available_actions)} available:", available_actions)
+        for action in available_actions:
+            board_prime = deserialize(s)
+            board_prime[action] = 1
+            s_prime = serialize(board_prime)
+            v_prime = v(s_prime, pi_random, p_groundtruth, gamma, v)
+            vs[action] = v_prime
+        render_heatmap(vs)
+
         row, col = -1, -1
         while row == -1 or col == -1:
             try:
@@ -243,11 +268,6 @@ def main() -> None:
                 row, col = [int(x) for x in move.split()]
             except:
                 print("Error processing move")
-
-        # print current value
-        value = v(serialize(board), pi_random, p_groundtruth, 0.9, v)
-        print("Board's current value", value)
-        # TODO: try to display next values
 
         board, reward, terminated, _truncated, _info = env.step((row, col))
         env.render()
