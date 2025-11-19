@@ -87,7 +87,55 @@ ok, so i got the bellman equation working "correctly," which is great! it curren
 infinitely. so even tic tac toe's measly set of states is too many without memoization
 (unless I have a bug.)
 
+---
+
+rendering the expected values of taking each action is weird because
+- our action can terminate (so the env doesn't get a full step), so we use reward immediately
+- our opponents actions can either
+    - terminate (get reward immediately)
+    - non-terminate (use value function from that board state)
+
+i implemented this very quickly and roughly to have some kind of future-action-state
+visualizer on top of only having the value function (which only takes states, and our
+states are only "player 1 (X) plays next" states)
+
+trying to average over the cases. though this seems to be incorrect still. for example,
+check the following board state, where playing in the middle col (either top row (0, 1)
+or bottom row (2, 1) has a 50% chance of winning with a random opponent (reward 1) and a
+50% chance of drawing (reward 0), so it should have a higher value (e.g., 0.5, ignoring
+discounting) than the other two options, which leave no chance of winning. however, they
+all get displayed as +0.00
+
+O |   | X
+---------
+X | X | O
+---------
+O |   |
+
+Board's current value 0.0
+Next values: 0.0
+3 available: [(0, 1), (2, 1), (2, 2)]
+ N/A  +0.00   N/A
+ N/A   N/A    N/A
+ N/A  +0.00  +0.00
+move: 0 1
+
+O | X | X
+---------
+X | X | O
+---------
+O |   | O
+
+Board's current value 0.0
+Next values: 0.0
+1 available: [(2, 1)]
+ N/A   N/A   N/A
+ N/A   N/A   N/A
+ N/A  +1.00  N/A
+---
+
 next things to explore:
+- how does gym's RL env handle 2 players?
 - system of equations view
 - fixed point equation
 - Bellman "operator"
@@ -133,7 +181,12 @@ def deserialize(serialized: bytes) -> np.ndarray:
 
 
 def possible_actions(s: State) -> list[Action]:
-    """Returns the set (list) of all possible (row, col) actions for s."""
+    """Returns the set (list) of all possible (row, col) actions for s.
+
+    Note that this is player-agnostic, so it's technically more general
+    than Action (defined as player 1 possible moves). It just returns the
+    empty slots on the board.
+    """
     board = deserialize(s)
     return [tuple(x) for x in np.argwhere(board == 0).tolist()]
 
@@ -244,20 +297,54 @@ def main() -> None:
         s = serialize(board)
         value = v(s, pi_random, p_groundtruth, gamma, v)
         print("Board's current value", value)
-        print("Next values:", value)
 
         # approximate the action-value function by considering taking each action and
         # computing the value for the resulting state.
-        # NOTE: This is wrong, because we (player 1) then get to move twice in a row!
-        # because the value function assumes we get to go next.
         vs = np.full((3, 3), np.nan)
         available_actions = possible_actions(s)
-        print(f"{len(available_actions)} available:", available_actions)
+        print(f"{len(available_actions)} moves available:", available_actions)
         for action in available_actions:
             board_prime = deserialize(s)
             board_prime[action] = 1
             s_prime = serialize(board_prime)
-            v_prime = v(s_prime, pi_random, p_groundtruth, gamma, v)
+            # NOTE: This is still wrong! because if our move finishes the game, we
+            # want to use that reward directly (I think), so a direct result check
+            # rather than len(opponent_actions) == 0
+            # CURSPOT ^
+            # if the board is finished, can we use its reward directly?
+            # is this correct?
+            result = check_board(board_prime)
+            if result != 0:
+                # this move would terminate game, so we'd get that reward directly.
+                v_prime = {
+                    -1: 0.0,
+                    1: 1.0,
+                    2: -1.0,
+                }[result]
+                # print(f"- {action} Game terminated (result: {result})")
+            else:
+                # non-terminal, so opponent gets to move
+                opponent_actions = possible_actions(s_prime)
+                # print(
+                #     f"- {action} Game not terminated ({len(opponent_actions)} possible opponent actions: {opponent_actions})"
+                # )
+                v_total = 0.0
+                for op_action in opponent_actions:
+                    board_pp = board_prime.copy()
+                    board_pp[op_action] = 2
+                    result = check_board(board_pp)
+                    if result != 0:
+                        # opponent's move would terminate game, so we use that reward
+                        v_total += {
+                            -1: 0.0,
+                            1: 1.0,
+                            2: -1.0,
+                        }[result]
+                    else:
+                        # would keep playing; use the board's value
+                        s_pp = serialize(board_pp)
+                        v_total += v(s_pp, pi_random, p_groundtruth, gamma, v)
+                v_prime = v_total / len(opponent_actions)
             vs[action] = v_prime
         render_heatmap(vs)
 
@@ -266,6 +353,9 @@ def main() -> None:
             try:
                 move = input("move: ")
                 row, col = [int(x) for x in move.split()]
+                if board[row][col] != 0:
+                    print("Spot Already taken")
+                    row, col = -1, -1
             except:
                 print("Error processing move")
 

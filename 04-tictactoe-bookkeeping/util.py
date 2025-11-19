@@ -35,7 +35,7 @@ def render_heatmap(arr):
             return "black on dim white", "N/A"
 
         # Normalize to 0-1 range
-        norm = val / 2
+        norm = (val + 1) / 2
 
         # Interpolate between red (0) and blue (1)
         if norm < 0.5:
@@ -48,7 +48,7 @@ def render_heatmap(arr):
             bg_color = f"rgb({intensity},{intensity},255)"
 
         # Use white text for darker backgrounds, else black
-        text_color = "white" if val < 0.5 or val > 1.5 else "black"
+        text_color = "white" if val < -0.5 or val > 0.5 else "black"
 
         return f"{text_color} on {bg_color}", f"{val:+.2f}"
 
@@ -64,5 +64,5 @@ def render_heatmap(arr):
 
 
 # Example usage:
-arr = np.array([[-1.0, -0.5, 0.0], [0.5, 1.0, np.nan], [-0.3, 0.7, 0.2]])
-render_heatmap(arr)
+# arr = np.array([[-1.0, -0.5, 0.0], [0.5, 1.0, np.nan], [-0.3, 0.7, 0.2]])
+# render_heatmap(arr)
